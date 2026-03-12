@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>墨刀 AI · 产品设计平台</title>
+  <meta name="description" content="墨刀 AI 产品设计平台 —— AI 驱动的下一代原型工具，体验中文版或英文版界面，或查阅方案说明文档。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0e1a;
+      --surface: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.08);
+      --text-primary: #f0f4ff;
+      --text-secondary: rgba(200,210,240,0.7);
+      --accent-blue: #5b8fff;
+      --accent-purple: #a78bfa;
+      --accent-pink: #f472b6;
+      --accent-cyan: #22d3ee;
+      --accent-green: #4ade80;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    /* ---- Background glow ---- */
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-glow::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 600px;
+      background: radial-gradient(ellipse, rgba(91,143,255,0.18) 0%, rgba(167,139,250,0.10) 40%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(60px);
+    }
+    .bg-glow::after {
+      content: '';
+      position: absolute;
+      bottom: -100px; right: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(ellipse, rgba(244,114,182,0.10) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(80px);
+    }
+
+    /* ---- Floating particles ---- */
+    .particle {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+    @keyframes float {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: .4; }
+      90%  { opacity: .4; }
+      100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+    }
+
+    /* ---- Layout ---- */
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px 80px;
+    }
+
+    /* ---- Logo / Badge ---- */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border: 1px solid rgba(91,143,255,0.35);
+      border-radius: 100px;
+      background: rgba(91,143,255,0.08);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent-blue);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      backdrop-filter: blur(8px);
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.5); opacity: .5; }
+    }
+
+    /* ---- Hero ---- */
+    .hero-title {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .hero-title .gradient {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 50%, var(--accent-pink) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 17px;
+      color: var(--text-secondary);
+      text-align: center;
+      max-width: 540px;
+      line-height: 1.7;
+      margin-bottom: 64px;
+      font-weight: 400;
+    }
+
+    /* ---- Cards ---- */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.3s cubic-bezier(.34,1.56,.64,1),
+                  border-color 0.3s ease,
+                  box-shadow 0.3s ease;
+      backdrop-filter: blur(16px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      background: var(--card-glow);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .card:hover {
+      transform: translateY(-8px) scale(1.01);
+      border-color: var(--card-accent);
+      box-shadow: 0 20px 60px var(--card-shadow), 0 0 0 1px var(--card-accent);
+    }
+    .card:hover::before { opacity: 1; }
+
+    /* Card 1 — CN */
+    .card-cn {
+      --card-accent: rgba(91,143,255,0.5);
+      --card-glow: linear-gradient(135deg, rgba(91,143,255,0.06) 0%, transparent 60%);
+      --card-shadow: rgba(91,143,255,0.18);
+    }
+    /* Card 2 — EN */
+    .card-en {
+      --card-accent: rgba(167,139,250,0.5);
+      --card-glow: linear-gradient(135deg, rgba(167,139,250,0.06) 0%, transparent 60%);
+      --card-shadow: rgba(167,139,250,0.18);
+    }
+    /* Card 3 — Docs */
+    .card-docs {
+      --card-accent: rgba(34,211,238,0.5);
+      --card-glow: linear-gradient(135deg, rgba(34,211,238,0.06) 0%, transparent 60%);
+      --card-shadow: rgba(34,211,238,0.18);
+    }
+
+    /* Card icon */
+    .card-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .card-cn .card-icon   { background: linear-gradient(135deg, rgba(91,143,255,0.2), rgba(91,143,255,0.08)); }
+    .card-en .card-icon   { background: linear-gradient(135deg, rgba(167,139,250,0.2), rgba(167,139,250,0.08)); }
+    .card-docs .card-icon { background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(34,211,238,0.08)); }
+
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.06em;
+    }
+    .card-cn .card-badge   { background: rgba(91,143,255,0.15); color: var(--accent-blue); }
+    .card-en .card-badge   { background: rgba(167,139,250,0.15); color: var(--accent-purple); }
+    .card-docs .card-badge { background: rgba(34,211,238,0.15); color: var(--accent-cyan); }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+    .card-cn .card-title   { color: #93b8ff; }
+    .card-en .card-title   { color: #c4b5fd; }
+    .card-docs .card-title { color: #67e8f9; }
+
+    .card-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .card-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .card-arrow {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.3s ease, background 0.3s ease;
+      flex-shrink: 0;
+    }
+    .card:hover .card-arrow { transform: translate(3px,-3px); }
+    .card-cn .card-arrow   { background: rgba(91,143,255,0.12); color: var(--accent-blue); }
+    .card-en .card-arrow   { background: rgba(167,139,250,0.12); color: var(--accent-purple); }
+    .card-docs .card-arrow { background: rgba(34,211,238,0.12); color: var(--accent-cyan); }
+
+    /* ---- Divider ---- */
+    .divider-line {
+      width: 100%;
+      max-width: 960px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+      margin: 56px 0 40px;
+    }
+
+    /* ---- Stats ---- */
+    .stats {
+      display: flex;
+      gap: 48px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* ---- Footer ---- */
+    .footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: rgba(200,210,240,0.35);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .cards { grid-template-columns: 1fr; max-width: 440px; }
+      .stats { gap: 28px; }
+    }
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .cards { grid-template-columns: 1fr 1fr; }
+      .card-docs { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background -->
+  <div class="bg-glow"></div>
+
+  <!-- Floating particles -->
+  <script>
+    const colors = ['#5b8fff','#a78bfa','#f472b6','#22d3ee','#4ade80'];
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 4 + 2;
+      p.style.cssText = `
+        width:${size}px;height:${size}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        left:${Math.random()*100}%;
+        animation-duration:${Math.random()*15+10}s;
+        animation-delay:${Math.random()*-20}s;
+      `;
+      document.body.appendChild(p);
+    }
+  </script>
+
+  <main class="page">
+    <!-- Badge -->
+    <div class="badge">
+      <span class="dot"></span>
+      墨刀 AI · Design Platform
+    </div>
+
+    <!-- Hero -->
+    <h1 class="hero-title">
+      <span class="gradient">AI 驱动</span>的下一代<br />产品设计体验
+    </h1>
+    <p class="hero-sub">
+      选择你的体验语言，或查阅首页方案说明文档。<br />
+      中英文双版本，完整呈现设计系统与交互逻辑。
+    </p>
+
+    <!-- Cards -->
+    <div class="cards">
+
+      <!-- Card 1: Chinese -->
+      <a class="card card-cn" href="./modao ai cn/dist/index.html" id="card-cn">
+        <div class="card-header">
+          <div class="card-icon">🇨🇳</div>
+          <span class="card-badge">✦ 中文版</span>
+        </div>
+        <div>
+          <div class="card-title">中文版界面</div>
+          <p class="card-desc">完整的中文 AI 产品设计平台，包含推荐、原型设计、产品策划等全功能模块，体验流畅的中文交互。</p>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags">
+            <span class="card-tag">AI 生成原型</span>
+            <span class="card-tag">PRD 文档</span>
+            <span class="card-tag">竞品分析</span>
+          </div>
+          <div class="card-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 7l5-5 5 5"/><path d="M12 2v14"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 2: English -->
+      <a class="card card-en" href="./modao ai en/dist/index.html" id="card-en">
+        <div class="card-header">
+          <div class="card-icon">🌐</div>
+          <span class="card-badge">✦ English</span>
+        </div>
+        <div>
+          <div class="card-title">English Interface</div>
+          <p class="card-desc">The fully localized English version of the AI design platform, featuring all modules with native English UX copy and interactions.</p>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags">
+            <span class="card-tag">AI Prototype</span>
+            <span class="card-tag">PRD Docs</span>
+            <span class="card-tag">Analysis</span>
+          </div>
+          <div class="card-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="12 5 19 12 12 19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+        </div>
+      </a>
+
+      <!-- Card 3: Docs -->
+      <a class="card card-docs" href="./方案说明/index.html" id="card-docs">
+        <div class="card-header">
+          <div class="card-icon">📋</div>
+          <span class="card-badge">✦ 方案文档</span>
+        </div>
+        <div>
+          <div class="card-title">首页方案说明</div>
+          <p class="card-desc">查阅首页信息架构调整方案，包含推荐模块、原型设计、图表与图片等各功能区域的变更说明及视觉样例。</p>
+        </div>
+        <div class="card-footer">
+          <div class="card-tags">
+            <span class="card-tag">信息架构</span>
+            <span class="card-tag">功能规划</span>
+            <span class="card-tag">UI 调整</span>
+          </div>
+          <div class="card-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="12 5 19 12 12 19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- Divider + Stats -->
+    <div class="divider-line"></div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">2</div>
+        <div class="stat-label">语言版本</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">7+</div>
+        <div class="stat-label">功能模块</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">20+</div>
+        <div class="stat-label">AI 工具</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">∞</div>
+        <div class="stat-label">创意可能</div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    © 2026 墨刀 AI · Design Platform &nbsp;·&nbsp; Powered by modao
+  </footer>
+</body>
+</html>
